@@ -70,6 +70,12 @@ Note: The `go.mod` file is configured to use the Agora SDK from `~/Agora-Golang-
 # Navigate to the project directory (if not already there)
 cd ~/convoai_to_video/go-publish-video
 
+# Generate IPC communication code from FlatBuffers schema
+cd ipc && flatc --go ipc_defs.fbs && cd ..
+
+# Download and verify Go module dependencies
+go mod tidy
+
 # Set environment variables for build
 export CGO_CFLAGS="-I$(pwd)/agora_sdk/include"
 export CGO_LDFLAGS="-L$(pwd)/agora_sdk -lagora_rtc_sdk -Wl,-rpath,$(pwd)/agora_sdk"
