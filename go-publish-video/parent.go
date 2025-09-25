@@ -14,7 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	"agora-go-publish/ipc/ipcgen"
+	"go-publish-video/ipc/ipcgen"
 	flatbuffers "github.com/google/flatbuffers/go"
 )
 
@@ -39,6 +39,7 @@ type ParentController struct {
 	frameRate      int
 	videoBitrate   int
 	minVideoBitrate int
+	videoCodec     string
 }
 
 func NewParentController(opts *Options) *ParentController {
@@ -54,6 +55,7 @@ func NewParentController(opts *Options) *ParentController {
 		frameRate:      opts.FrameRate,
 		videoBitrate:   opts.VideoBitrate,
 		minVideoBitrate: opts.MinVideoBitrate,
+		videoCodec:     opts.VideoCodec,
 	}
 }
 
@@ -76,7 +78,7 @@ type Options struct {
 }
 
 func (p *ParentController) Start(opts *Options) error {
-	p.logger.Println("Starting child process...")
+	p.logger.Printf("Starting child process with %s codec...", opts.VideoCodec)
 
 	// Build command with all necessary flags
 	args := []string{
@@ -127,20 +129,28 @@ func (p *ParentController) Start(opts *Options) error {
 	go p.readChildMessages()
 
 	// Wait for connection to be established
-	timeout := time.After(10 * time.Second)
+	timeout := time.After(30 * time.Second) // Increased timeout
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-timeout:
+			p.mu.Lock()
+			connected := p.isConnected
+			p.mu.Unlock()
+			if connected {
+				p.logger.Printf("Child successfully connected to Agora with %s codec", opts.VideoCodec)
+				return nil
+			}
+			p.logger.Printf("DEBUG: Timeout waiting for connection. isConnected=%v", connected)
 			return fmt.Errorf("timeout waiting for child to connect to Agora")
 		case <-ticker.C:
 			p.mu.Lock()
 			connected := p.isConnected
 			p.mu.Unlock()
 			if connected {
-				p.logger.Println("Child successfully connected to Agora")
+				p.logger.Printf("Child successfully connected to Agora with %s codec", opts.VideoCodec)
 				return nil
 			}
 		}
@@ -161,6 +171,7 @@ func (p *ParentController) readChildStderr() {
 func (p *ParentController) readChildMessages() {
 	defer p.wg.Done()
 	reader := bufio.NewReader(p.stdout)
+	messageCount := 0
 
 	for {
 		// Read length prefix
@@ -175,7 +186,11 @@ func (p *ParentController) readChildMessages() {
 		}
 
 		msgLen := binary.BigEndian.Uint32(lenBytes)
+		messageCount++
+		p.logger.Printf("DEBUG: Message #%d, length: %d bytes", messageCount, msgLen)
+		
 		if msgLen == 0 {
+			p.logger.Printf("DEBUG: Received 0-length message")
 			continue
 		}
 
@@ -194,10 +209,19 @@ func (p *ParentController) readChildMessages() {
 func (p *ParentController) handleChildMessage(msgBuf []byte) {
 	msg := ipcgen.GetRootAsIPCMessage(msgBuf, 0)
 	
-	switch msg.MessageType() {
+	// DEBUG: Log every message type
+	msgType := msg.MessageType()
+	p.logger.Printf("DEBUG: Received message type: %s (value: %d)", 
+		ipcgen.EnumNamesMessageType[msgType], msgType)
+	
+	switch msgType {
 	case ipcgen.MessageTypeSTATUS_RESPONSE:
+		p.logger.Printf("DEBUG: Processing STATUS_RESPONSE")
+		
 		// Get payload bytes
 		payloadLen := msg.PayloadLength()
+		p.logger.Printf("DEBUG: STATUS_RESPONSE payload length: %d", payloadLen)
+		
 		if payloadLen > 0 {
 			payloadBytes := make([]byte, payloadLen)
 			for i := 0; i < payloadLen; i++ {
@@ -206,17 +230,30 @@ func (p *ParentController) handleChildMessage(msgBuf []byte) {
 			
 			// Parse StatusResponsePayload
 			status := ipcgen.GetRootAsStatusResponsePayload(payloadBytes, 0)
+			statusValue := status.Status()
+			
+			p.logger.Printf("DEBUG: Status value: %d, Expected CONNECTED value: %d", 
+				statusValue, ipcgen.ConnectionStatusCONNECTED)
+			p.logger.Printf("DEBUG: Status name: %s", 
+				ipcgen.EnumNamesConnectionStatus[statusValue])
+			
 			p.logger.Printf("Status: %s, Message: %s, Info: %s",
-				ipcgen.EnumNamesConnectionStatus[status.Status()],
+				ipcgen.EnumNamesConnectionStatus[statusValue],
 				string(status.ErrorMessage()),
 				string(status.AdditionalInfo()))
 			
 			// Update connection state based on status
-			if status.Status() == ipcgen.ConnectionStatusCONNECTED {
+			if statusValue == ipcgen.ConnectionStatusCONNECTED {
+				p.logger.Printf("DEBUG: *** CONNECTED status received! Setting isConnected = true ***")
 				p.mu.Lock()
 				p.isConnected = true
 				p.mu.Unlock()
+			} else {
+				p.logger.Printf("DEBUG: Status is %s (not CONNECTED)", 
+					ipcgen.EnumNamesConnectionStatus[statusValue])
 			}
+		} else {
+			p.logger.Printf("DEBUG: STATUS_RESPONSE has no payload!")
 		}
 		
 	case ipcgen.MessageTypeLOG_RESPONSE:
@@ -236,8 +273,8 @@ func (p *ParentController) handleChildMessage(msgBuf []byte) {
 		}
 		
 	default:
-		p.logger.Printf("Received unexpected message type from child: %s", 
-			ipcgen.EnumNamesMessageType[msg.MessageType()])
+		p.logger.Printf("Received unexpected message type from child: %s (value: %d)", 
+			ipcgen.EnumNamesMessageType[msgType], msgType)
 	}
 }
 
@@ -493,6 +530,9 @@ func (p *ParentController) StreamVideo(stopChan <-chan struct{}) {
 
 	frameCount := 0
 	startTime := time.Now()
+	
+	p.logger.Printf("Starting video stream: %s codec, %dx%d@%dfps, frame size: %d bytes", 
+		p.videoCodec, p.videoWidth, p.videoHeight, p.frameRate, frameSize)
 
 	for {
 		select {
@@ -534,7 +574,8 @@ func (p *ParentController) StreamVideo(stopChan <-chan struct{}) {
 
 			frameCount++
 			if frameCount%(p.frameRate) == 0 { // Log every second
-				p.logger.Printf("Sent %d video frames (%.2f seconds)", frameCount, float64(frameCount)/float64(p.frameRate))
+				p.logger.Printf("Sent %d video frames (%.2f seconds) with %s codec", 
+					frameCount, float64(frameCount)/float64(p.frameRate), p.videoCodec)
 			}
 		}
 	}
@@ -555,10 +596,10 @@ func main() {
 	flag.IntVar(&opts.VideoWidth, "width", 352, "Video width")
 	flag.IntVar(&opts.VideoHeight, "height", 288, "Video height")
 	flag.IntVar(&opts.FrameRate, "frameRate", 15, "Video frame rate")
-	flag.StringVar(&opts.VideoCodec, "videoCodec", "H264", "Video codec (H264 or VP8)")
+	flag.StringVar(&opts.VideoCodec, "videoCodec", "H264", "Video codec (H264, VP8, or AV1)")
 	flag.IntVar(&opts.VideoBitrate, "bitrate", 1000, "Video target bitrate in Kbps")
 	flag.IntVar(&opts.MinVideoBitrate, "minBitrate", 100, "Video minimum bitrate in Kbps")
-	flag.BoolVar(&opts.EnableStringUID, "enableStringUID", false, "Enable string UID support in Agora SDK")
+	flag.BoolVar(&opts.EnableStringUID, "enableStringUID", true, "Enable string UID support in Agora SDK")
 
 	flag.Parse()
 
@@ -568,6 +609,47 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
+
+	// Validate codec selection
+	supportedCodecs := map[string]bool{
+		"H264": true,
+		"VP8":  true,
+		"AV1":  true,
+	}
+	
+	if !supportedCodecs[opts.VideoCodec] {
+		fmt.Printf("Warning: Unsupported video codec '%s'. Supported codecs: H264, VP8, AV1\n", opts.VideoCodec)
+		fmt.Println("Defaulting to H264")
+		opts.VideoCodec = "H264"
+	}
+
+	// Apply codec-specific defaults if not overridden
+	if opts.VideoCodec == "AV1" {
+		// AV1 typically needs higher bitrates for real-time encoding
+		if opts.VideoBitrate == 1000 { // Default value
+			opts.VideoBitrate = 2000
+			fmt.Println("Info: Adjusting bitrate to 2000 Kbps for AV1 codec")
+		}
+		if opts.MinVideoBitrate == 100 { // Default value
+			opts.MinVideoBitrate = 800
+			fmt.Println("Info: Adjusting minimum bitrate to 800 Kbps for AV1 codec")
+		}
+	}
+
+	// Log configuration
+	fmt.Println("=====================================")
+	fmt.Println("Agora Video/Audio Publisher")
+	fmt.Println("=====================================")
+	fmt.Printf("App ID: %s\n", opts.AppID)
+	fmt.Printf("Channel: %s\n", opts.ChannelName)
+	fmt.Printf("User ID: %s\n", opts.UserID)
+	fmt.Printf("Video Codec: %s\n", opts.VideoCodec)
+	fmt.Printf("Video: %dx%d @ %d fps\n", opts.VideoWidth, opts.VideoHeight, opts.FrameRate)
+	fmt.Printf("Video Bitrate: %d-%d Kbps\n", opts.MinVideoBitrate, opts.VideoBitrate)
+	fmt.Printf("Audio: %d Hz, %d channel(s)\n", opts.SampleRate, opts.AudioChannels)
+	fmt.Printf("Video File: %s\n", opts.VideoFile)
+	fmt.Printf("Audio File: %s\n", opts.AudioFile)
+	fmt.Println("=====================================")
 
 	// Create parent controller
 	controller := NewParentController(opts)
@@ -595,7 +677,14 @@ func main() {
 		controller.StreamVideo(stopChan)
 	}()
 
-	controller.logger.Println("Streaming started. Press Ctrl+C to stop.")
+	controller.logger.Printf("Streaming started with %s codec. Press Ctrl+C to stop.", opts.VideoCodec)
+	
+	// Print viewer URL
+	fmt.Println("\n=====================================")
+	fmt.Printf("View stream at: https://webdemo.agora.io/basicVideoCall/index.html\n")
+	fmt.Printf("Use App ID: %s\n", opts.AppID)
+	fmt.Printf("Join Channel: %s\n", opts.ChannelName)
+	fmt.Println("=====================================\n")
 
 	// Wait for interrupt signal
 	<-sigChan
