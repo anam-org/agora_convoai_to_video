@@ -93,8 +93,11 @@ go build -o child child.go
 # With VP8 codec
 ./parent -appID "your_app_id" -channelName "your_channel" -videoCodec "VP8"
 
-# With H264 codec (default)
-./parent -appID "your_app_id" -channelName "your_channel" -videoCodec "H264"
+# With custom user ID (string UID enabled by default)
+./parent -appID "your_app_id" -channelName "your_channel" -userID "myuser123"
+
+# With integer user IDs
+./parent -appID "your_app_id" -channelName "your_channel" -userID "12345" -enableStringUID=false
 ```
 
 This will publish the YUV and PCM files from the test_data folder. You can view the stream on Agora Web Demo:
@@ -114,6 +117,7 @@ Use your App ID and Channel Name to join the stream.
 **Optional:**
 - `-userID`: User ID for the session (default: "100")
 - `-token`: Authentication token if required
+- `-enableStringUID`: Use string user IDs instead of integers (default: true)
 - `-width`, `-height`: Video resolution (default: 352x288)
 - `-frameRate`: Video frame rate (default: 15 fps)
 - `-bitrate`: Video bitrate in Kbps (default: 1000)
