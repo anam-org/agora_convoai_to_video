@@ -17,7 +17,7 @@ The integration follows a three-phase workflow:
 ## Implementation Components
 
 ### 1. Connection Setup API
-[📁 connection-setup/](./connection-setup/)
+[📁 connection-setup/](anam-connection/)
 
 ### 2. WebSocket Audio Streaming
 [📁 websocket-receive-audio/](./websocket-receive-audio/)

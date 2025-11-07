@@ -37,11 +37,10 @@ class WebSocketAudioSender:
             logger.info(f"Connecting to WebSocket: {WEBSOCKET_ADDRESS}")
             logger.info(f"Using session token: {SESSION_TOKEN}")
             
-            # Use extra_headers for WebSocket authentication (websockets 10.4)
-            headers = {"authorization": f"Bearer {SESSION_TOKEN}"}
+            # Use additional_headers for WebSocket authentication (websockets 15.0+)
             self.websocket = await websockets.connect(
                 WEBSOCKET_ADDRESS,
-                extra_headers=headers
+                additional_headers={}
             )
             logger.info("WebSocket connected successfully")
             

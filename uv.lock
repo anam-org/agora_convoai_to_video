@@ -1,0 +1,19 @@
+version = 1
+revision = 3
+requires-python = ">=3.12"
+
+[manifest]
+members = [
+    "agora-convoai-to-video",
+    "connection-setup",
+]
+
+[[package]]
+name = "agora-convoai-to-video"
+version = "0.1.0"
+source = { virtual = "." }
+
+[[package]]
+name = "connection-setup"
+version = "0.1.0"
+source = { virtual = "connection-setup" }
