@@ -27,8 +27,8 @@ BASE_URL = os.getenv("BASE_URL", "http://localhost:8764")
 SESSION_TOKEN_ENDPOINT = f"{BASE_URL}/auth/session-token"
 SESSION_ENDPOINT = f"{BASE_URL}/engine/session"
 API_KEY = os.getenv("API_KEY", "test-api-key-123")
-ANAM_CLUSTER = os.getenv("ANAM_CLUSTER", "devspace")
-ANAM_POD_NAME = os.getenv("ANAM_POD", "")
+ANAM_CLUSTER = os.getenv("ANAM_CLUSTER")
+ANAM_POD_NAME = os.getenv("ANAM_POD")
 
 # Session configuration
 AVATAR_ID = os.getenv("AVATAR_ID", "16cb73e7de08")
@@ -64,24 +64,31 @@ class InteractiveSession:
         """Step 1: Get session token from API"""
         logger.info("Step 1: Creating session token...")
 
+        # Build environment config with agoraSettings
+        environment = {
+            "agoraSettings": {
+                "appId": APP_ID,
+                "token": AGORA_TOKEN,
+                "channel": CHANNEL,
+                "uid": UID,
+                "quality": QUALITY,
+                "videoEncoding": VIDEO_ENCODING,
+                "enableStringUids": ENABLE_STRING_UIDS,
+                "activityIdleTimeout": ACTIVITY_IDLE_TIMEOUT
+            }
+        }
+
+        # Only include cluster and podName if they are set
+        if ANAM_CLUSTER:
+            environment["cluster"] = ANAM_CLUSTER
+        if ANAM_POD_NAME:
+            environment["podName"] = ANAM_POD_NAME
+
         payload = {
             "personaConfig": {
                 "avatarId": AVATAR_ID
             },
-            "environment": {
-                "cluster": ANAM_CLUSTER,
-                "podName": ANAM_POD_NAME,
-                "agoraSettings": {
-                    "appId": APP_ID,
-                    "token": AGORA_TOKEN,
-                    "channel": CHANNEL,
-                    "uid": UID,
-                    "quality": QUALITY,
-                    "videoEncoding": VIDEO_ENCODING,
-                    "enableStringUids": ENABLE_STRING_UIDS,
-                    "activityIdleTimeout": ACTIVITY_IDLE_TIMEOUT
-                }
-            }
+            "environment": environment
         }
 
         headers = {
