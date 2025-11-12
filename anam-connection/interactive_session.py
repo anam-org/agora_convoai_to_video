@@ -337,7 +337,6 @@ class InteractiveSession:
         """Automatically send heartbeat every 5 seconds"""
         try:
             while True:
-                await asyncio.sleep(5)
                 if self.websocket:
                     await self.send_heartbeat()
                 else:
