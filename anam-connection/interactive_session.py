@@ -339,6 +339,7 @@ class InteractiveSession:
             while True:
                 if self.websocket:
                     await self.send_heartbeat()
+                    await asyncio.sleep(5)
                 else:
                     break
         except asyncio.CancelledError:
