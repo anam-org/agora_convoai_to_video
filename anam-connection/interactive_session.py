@@ -175,7 +175,8 @@ class InteractiveSession:
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
-            "Authorization": f"Bearer {API_KEY}"
+            "Authorization": f"Bearer {API_KEY}",
+            "x-vercel-protection-bypass": "WvrmD1CsSyCzkAdxjyU6Iz1DuJOgKjMZ",
         }
 
         try:
@@ -192,7 +193,7 @@ class InteractiveSession:
                 logger.info("✅ Session stopped successfully")
                 return True
             else:
-                logger.warning(f"⚠️ Session stop returned status: {response.status_code}")
+                logger.warning(f"⚠️ Session stop returned status: {response.status_code}. {response.text}")
                 return False
 
         except Exception as e:
