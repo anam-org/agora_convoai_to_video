@@ -207,7 +207,7 @@ python interactive_session.py
 - `environment.podName`
 
 ## audioSampleRate
-- This is the audio sample rate for the incoming Voice Event.
+- This is the audio sample rate for the incoming Voice Command.
 - The service will deliver a synchronised A/V stream, with the ingested audio (at original quality).
 - It has to be configured at initialization of the session.
 - Any Voice Event sent with a different audio sample rate will be rejected.
