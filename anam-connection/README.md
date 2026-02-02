@@ -38,7 +38,8 @@ Authorization: Bearer YOUR_API_KEY
       "quality": "high",
       "videoEncoding": "H264",
       "enableStringUids": false,
-      "activityIdleTimeout": 120
+      "activityIdleTimeout": 120,
+      "audioSampleRate": 24000
     }
   }
 }
@@ -105,7 +106,7 @@ Don't set the authorization header in the websocket connection.
 {
   "command": "voice",
   "audio": "base64-encoded-pcm16",
-  "sample_rate": 16000,
+  "sample_rate": 24000,
   "encoding": "PCM16",
   "event_id": "uuid-v4"
 }
@@ -190,6 +191,7 @@ python interactive_session.py
 | `VIDEO_ENCODING` | No | `H264` | `H264`/`VP8`/`AV1` |
 | `ENABLE_STRING_UIDS` | No | `false` | String UIDs |
 | `ACTIVITY_IDLE_TIMEOUT` | No | `120` | Seconds |
+| `ANAM_AUDIO_SAMPLE_RATE` | No | `24000` | Audio sample rate |
 | `ANAM_CLUSTER` | No | - | Cluster (optional) |
 | `ANAM_POD` | No | - | Pod name (optional) |
 
@@ -203,3 +205,9 @@ python interactive_session.py
 - `agoraSettings.activityIdleTimeout` (defaults to 120)
 - `environment.cluster`
 - `environment.podName`
+
+## audioSampleRate
+- This is the audio sample rate for the incoming Voice Event.
+- The service will deliver a synchronised A/V stream, with the ingested audio (at original quality).
+- It has to be configured at initialization of the session.
+- Any Voice Event sent with a different audio sample rate will be rejected.

@@ -40,6 +40,7 @@ QUALITY = os.getenv("VIDEO_QUALITY", "high")
 VIDEO_ENCODING = os.getenv("VIDEO_ENCODING", "H264")
 ENABLE_STRING_UIDS = os.getenv("ENABLE_STRING_UIDS", "false").lower() == "true"
 ACTIVITY_IDLE_TIMEOUT = int(os.getenv("ACTIVITY_IDLE_TIMEOUT", "120"))
+ANAM_AUDIO_SAMPLE_RATE = int(os.getenv("ANAM_AUDIO_SAMPLE_RATE", "24000"))
 
 # Setup logging
 logging.basicConfig(
@@ -74,7 +75,8 @@ class InteractiveSession:
                 "quality": QUALITY,
                 "videoEncoding": VIDEO_ENCODING,
                 "enableStringUids": ENABLE_STRING_UIDS,
-                "activityIdleTimeout": ACTIVITY_IDLE_TIMEOUT
+                "activityIdleTimeout": ACTIVITY_IDLE_TIMEOUT,
+                "audioSampleRate": ANAM_AUDIO_SAMPLE_RATE
             }
         }
 
@@ -100,6 +102,7 @@ class InteractiveSession:
         }
 
         try:
+            logger.info(f"Payload: {json.dumps(payload, indent=2)}")
             response = requests.post(
                 SESSION_TOKEN_ENDPOINT,
                 headers=headers,
