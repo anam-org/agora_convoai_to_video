@@ -102,7 +102,6 @@ class InteractiveSession:
         }
 
         try:
-            logger.info(f"Payload: {json.dumps(payload, indent=2)}")
             response = requests.post(
                 SESSION_TOKEN_ENDPOINT,
                 headers=headers,
