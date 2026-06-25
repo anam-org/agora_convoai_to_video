@@ -186,8 +186,6 @@ python interactive_session.py
 | `ENABLE_STRING_UIDS` | No | `false` | String UIDs |
 | `ACTIVITY_IDLE_TIMEOUT` | No | `120` | Seconds |
 | `ANAM_AUDIO_SAMPLE_RATE` | No | `24000` | Audio sample rate |
-| `ANAM_CLUSTER` | No | - | Cluster (optional) |
-| `ANAM_POD` | No | - | Pod name (optional) |
 
 ## Field Notes
 
@@ -198,8 +196,6 @@ python interactive_session.py
 **Optional:**
 - `agoraSettings.activityIdleTimeout` (defaults to 120)
 - `personaConfig.avatarModel` (overwrites the default model for the selected avatar)
-- `environment.cluster`
-- `environment.podName`
 
 ## audioSampleRate
 - This is the audio sample rate for the incoming Voice Command.
