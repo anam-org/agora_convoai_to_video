@@ -27,7 +27,8 @@ Authorization: Bearer YOUR_API_KEY
 ```json
 {
   "personaConfig": {
-    "avatarId": "16cb73e7de08"
+    "avatarId": "16cb73e7de08",
+    "avatarModel": "cara-4"
   },
   "environment": {
     "agoraSettings": {
@@ -42,14 +43,6 @@ Authorization: Bearer YOUR_API_KEY
       "audioSampleRate": 24000
     }
   }
-}
-```
-
-**Optional fields in `environment` (sibling of agoraSettings):** These are used to route to a specific anam cluster or pod. For development purposes only.
-```json
-{
-  "cluster": "devspace",
-  "podName": "pod-name"
 }
 ```
 
@@ -183,6 +176,7 @@ python interactive_session.py
 | `BASE_URL` | No | `http://localhost:8764` | API base URL |
 | `API_KEY` | Yes | - | Anam API key |
 | `AVATAR_ID` | Yes | - | Avatar ID |
+| `ANAM_AVATAR_MODEL` | No | default model for the selected avatar | Model to render the avatar  |
 | `AGORA_APP_ID` | Yes | - | Agora app ID |
 | `AGORA_TOKEN` | Yes | - | Agora token |
 | `AGORA_CHANNEL` | Yes | - | Channel name |
@@ -203,6 +197,7 @@ python interactive_session.py
 
 **Optional:**
 - `agoraSettings.activityIdleTimeout` (defaults to 120)
+- `personaConfig.avatarModel` (overwrites the default model for the selected avatar)
 - `environment.cluster`
 - `environment.podName`
 
