@@ -27,7 +27,8 @@ Authorization: Bearer YOUR_API_KEY
 ```json
 {
   "personaConfig": {
-    "avatarId": "16cb73e7de08"
+    "avatarId": "16cb73e7de08",
+    "avatarModel": "cara-4"
   },
   "environment": {
     "agoraSettings": {
@@ -42,14 +43,6 @@ Authorization: Bearer YOUR_API_KEY
       "audioSampleRate": 24000
     }
   }
-}
-```
-
-**Optional fields in `environment` (sibling of agoraSettings):** These are used to route to a specific anam cluster or pod. For development purposes only.
-```json
-{
-  "cluster": "devspace",
-  "podName": "pod-name"
 }
 ```
 
@@ -183,6 +176,7 @@ python interactive_session.py
 | `BASE_URL` | No | `http://localhost:8764` | API base URL |
 | `API_KEY` | Yes | - | Anam API key |
 | `AVATAR_ID` | Yes | - | Avatar ID |
+| `ANAM_AVATAR_MODEL` | No | default model for the selected avatar | Model to render the avatar  |
 | `AGORA_APP_ID` | Yes | - | Agora app ID |
 | `AGORA_TOKEN` | Yes | - | Agora token |
 | `AGORA_CHANNEL` | Yes | - | Channel name |
@@ -192,8 +186,6 @@ python interactive_session.py
 | `ENABLE_STRING_UIDS` | No | `false` | String UIDs |
 | `ACTIVITY_IDLE_TIMEOUT` | No | `120` | Seconds |
 | `ANAM_AUDIO_SAMPLE_RATE` | No | `24000` | Audio sample rate |
-| `ANAM_CLUSTER` | No | - | Cluster (optional) |
-| `ANAM_POD` | No | - | Pod name (optional) |
 
 ## Field Notes
 
@@ -203,8 +195,7 @@ python interactive_session.py
 
 **Optional:**
 - `agoraSettings.activityIdleTimeout` (defaults to 120)
-- `environment.cluster`
-- `environment.podName`
+- `personaConfig.avatarModel` (overwrites the default model for the selected avatar)
 
 ## audioSampleRate
 - This is the audio sample rate for the incoming Voice Command.
