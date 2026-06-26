@@ -32,7 +32,7 @@ ANAM_POD_NAME = os.getenv("ANAM_POD")
 
 # Session configuration
 AVATAR_ID = os.getenv("AVATAR_ID", "16cb73e7de08")
-AVATAR_MODEL = os.getenv("ANAM_AVATAR_MODEL", "cara-4")
+AVATAR_MODEL = os.getenv("AVATAR_MODEL", "cara-4")
 APP_ID = os.getenv("AGORA_APP_ID", "dllkSlkdmmppollalepls")
 AGORA_TOKEN = os.getenv("AGORA_TOKEN", "lkmmopplek")
 CHANNEL = os.getenv("AGORA_CHANNEL", "room1")
