@@ -40,7 +40,9 @@ Authorization: Bearer YOUR_API_KEY
       "videoEncoding": "H264",
       "enableStringUids": false,
       "activityIdleTimeout": 120,
-      "audioSampleRate": 24000
+      "audioSampleRate": 24000,
+      "width": 768,
+      "height": 1152
     }
   }
 }
@@ -186,6 +188,8 @@ python interactive_session.py
 | `ENABLE_STRING_UIDS` | No | `false` | String UIDs |
 | `ACTIVITY_IDLE_TIMEOUT` | No | `120` | Seconds |
 | `ANAM_AUDIO_SAMPLE_RATE` | No | `24000` | Audio sample rate |
+| `VIDEO_WIDTH` | No | 720 or 1152 | Output frame width in pixels. Depends on Avatar Model (Cara-3: 720, Cara-4: 1152). Must be paired with `VIDEO_HEIGHT`. |
+| `VIDEO_HEIGHT` | No | 480 or 768 | Output frame height in pixels. Depends on Avatar Model (Cara-3: 480, Cara-4: 768). Must be paired with `VIDEO_WIDTH`. |
 
 ## Field Notes
 
@@ -202,3 +206,11 @@ python interactive_session.py
 - The service will deliver a synchronised A/V stream, with the ingested audio (at original quality).
 - It has to be configured at initialization of the session.
 - Any Voice Event sent with a different audio sample rate will be rejected.
+
+## width / height (portrait output)
+- Optional. Both must be set together, or both left unset, and only supported resolutions can be used:
+  | avatar model | orientation | width | height |
+  |--------------|-------------|-------|--------|
+  | Cara-3 | landscape | 720 | 480 |
+  | Cara-4 | landscape | 1152 | 768 |
+  | Cara-4 | portrait | 768 | 1152 |
