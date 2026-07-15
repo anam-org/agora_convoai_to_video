@@ -43,6 +43,17 @@ ENABLE_STRING_UIDS = os.getenv("ENABLE_STRING_UIDS", "false").lower() == "true"
 ACTIVITY_IDLE_TIMEOUT = int(os.getenv("ACTIVITY_IDLE_TIMEOUT", "120"))
 ANAM_AUDIO_SAMPLE_RATE = int(os.getenv("ANAM_AUDIO_SAMPLE_RATE", "24000"))
 
+# Optional explicit output frame size (pixels). Both must be set together.
+# Supported resolutions: 720x480 (landcape Cara-3) or 1152x768 (landscape Cara-4) or 768x1152 (portrait Cara-4).
+# Portrait require a cara-4 model or later. Any other resolution is not supported. 
+# When unset, the default resolution for the applicable model is used. 
+_VIDEO_WIDTH_ENV = os.getenv("VIDEO_WIDTH")
+_VIDEO_HEIGHT_ENV = os.getenv("VIDEO_HEIGHT")
+VIDEO_WIDTH = int(_VIDEO_WIDTH_ENV) if _VIDEO_WIDTH_ENV else None
+VIDEO_HEIGHT = int(_VIDEO_HEIGHT_ENV) if _VIDEO_HEIGHT_ENV else None
+if (VIDEO_WIDTH is None) != (VIDEO_HEIGHT is None):
+    raise ValueError("VIDEO_WIDTH and VIDEO_HEIGHT must be set together, or both left unset")
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
@@ -67,19 +78,23 @@ class InteractiveSession:
         logger.info("Step 1: Creating session token...")
 
         # Build environment config with agoraSettings
-        environment = {
-            "agoraSettings": {
-                "appId": APP_ID,
-                "token": AGORA_TOKEN,
-                "channel": CHANNEL,
-                "uid": UID,
-                "quality": QUALITY,
-                "videoEncoding": VIDEO_ENCODING,
-                "enableStringUids": ENABLE_STRING_UIDS,
-                "activityIdleTimeout": ACTIVITY_IDLE_TIMEOUT,
-                "audioSampleRate": ANAM_AUDIO_SAMPLE_RATE
-            }
+        agora_settings = {
+            "appId": APP_ID,
+            "token": AGORA_TOKEN,
+            "channel": CHANNEL,
+            "uid": UID,
+            "quality": QUALITY,
+            "videoEncoding": VIDEO_ENCODING,
+            "enableStringUids": ENABLE_STRING_UIDS,
+            "activityIdleTimeout": ACTIVITY_IDLE_TIMEOUT,
+            "audioSampleRate": ANAM_AUDIO_SAMPLE_RATE,
         }
+        # Only include width/height when the user set them both.
+        if VIDEO_WIDTH is not None and VIDEO_HEIGHT is not None:
+            agora_settings["width"] = VIDEO_WIDTH
+            agora_settings["height"] = VIDEO_HEIGHT
+
+        environment = {"agoraSettings": agora_settings}
 
         # Only include cluster and podName if they are set
         if ANAM_CLUSTER:
